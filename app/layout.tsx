@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist } from 'next/font/google'
 import Link from 'next/link'
+import { auth, signOut } from '@/auth'
 import './globals.css'
 
 const geist = Geist({ subsets: ['latin'] })
@@ -10,7 +11,9 @@ export const metadata: Metadata = {
   description: 'Wix Marketplace template analytics dashboard',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth()
+
   return (
     <html lang="en">
       <body className={`${geist.className} min-h-screen bg-gray-50`}>
@@ -19,17 +22,37 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <h1 className="text-xl font-semibold text-gray-900 whitespace-nowrap">
               Marketplace Template Analytics
             </h1>
-            <nav className="flex gap-6 text-sm font-medium">
-              <Link href="/" className="text-gray-600 hover:text-blue-600 transition-colors">
-                Dashboard
-              </Link>
-              <Link href="/partners" className="text-gray-600 hover:text-blue-600 transition-colors">
-                Partners
-              </Link>
-              <Link href="/templates" className="text-gray-600 hover:text-blue-600 transition-colors">
-                Templates
-              </Link>
-            </nav>
+            {session?.user && (
+              <nav className="flex gap-6 text-sm font-medium">
+                <Link href="/" className="text-gray-600 hover:text-blue-600 transition-colors">
+                  Dashboard
+                </Link>
+                <Link href="/partners" className="text-gray-600 hover:text-blue-600 transition-colors">
+                  Partners
+                </Link>
+                <Link href="/templates" className="text-gray-600 hover:text-blue-600 transition-colors">
+                  Templates
+                </Link>
+              </nav>
+            )}
+            {session?.user && (
+              <div className="ml-auto flex items-center gap-3">
+                <span className="text-xs text-gray-400">{session.user.email}</span>
+                <form
+                  action={async () => {
+                    'use server'
+                    await signOut({ redirectTo: '/signin' })
+                  }}
+                >
+                  <button
+                    type="submit"
+                    className="text-xs text-gray-500 hover:text-gray-800 transition-colors border border-gray-200 rounded px-2.5 py-1"
+                  >
+                    Sign out
+                  </button>
+                </form>
+              </div>
+            )}
           </div>
         </header>
         <main className="max-w-7xl mx-auto px-6 py-8">{children}</main>
